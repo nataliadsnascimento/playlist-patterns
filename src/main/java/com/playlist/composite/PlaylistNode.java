@@ -1,13 +1,16 @@
 package com.playlist.composite;
 
-
 import com.playlist.core.Track;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Composite do padrão Composite: uma playlist que pode conter faixas e outras playlists.
  */
 public class PlaylistNode implements MediaItem {
+  private final String name;
+  private final List<MediaItem> child = new ArrayList<>();
 
   /**
    * Cria uma playlist vazia.
@@ -16,7 +19,10 @@ public class PlaylistNode implements MediaItem {
    * @throws IllegalArgumentException se o nome for nulo ou em branco.
    */
   public PlaylistNode(String name) {
-    throw new UnsupportedOperationException("Requisito 1: implemente o construtor de PlaylistNode");
+    if (name == null || name.isBlank()) {
+      throw new IllegalArgumentException("O nome não pode ser nulo nem em branco");
+    }
+    this.name = name;
   }
 
   /**
@@ -24,10 +30,21 @@ public class PlaylistNode implements MediaItem {
    *
    * @param item item a ser adicionado.
    * @return a própria playlist, permitindo encadear chamadas.
-   * @throws IllegalArgumentException se o item for nulo, for a própria playlist ou contiver a própria playlist (o que criaria um ciclo).
+   * @throws IllegalArgumentException se o item for nulo, for a própria
+   *         playlist ou contiver a própria playlist (o que criaria um ciclo).
    */
   public PlaylistNode add(MediaItem item) {
-    throw new UnsupportedOperationException("Requisito 1: implemente PlaylistNode.add");
+    if (item == null) {
+      throw new IllegalArgumentException("Item não pode ser nulo");
+    }
+    if (item == this) {
+      throw new IllegalArgumentException("Playlist não pode ser adicionada a ela mesma");
+    }
+    if (item instanceof PlaylistNode && ((PlaylistNode) item).contains(this)) {
+      throw new IllegalArgumentException("Não é possível criar um ciclo");
+    }
+    child.add(item);
+    return this;
   }
 
   /**
@@ -37,7 +54,7 @@ public class PlaylistNode implements MediaItem {
    * @return {@code true} se o item era filho direto e foi removido.
    */
   public boolean remove(MediaItem item) {
-    throw new UnsupportedOperationException("Requisito 1: implemente PlaylistNode.remove");
+    return child.remove(item);
   }
 
   /**
@@ -46,7 +63,7 @@ public class PlaylistNode implements MediaItem {
    * @return uma lista imutável com os filhos, na ordem de inserção.
    */
   public List<MediaItem> getChildren() {
-    throw new UnsupportedOperationException("Exercício 1: implemente PlaylistNode.getChildren");
+    return Collections.unmodifiableList(child);
   }
 
   /**
@@ -56,27 +73,46 @@ public class PlaylistNode implements MediaItem {
    * @return {@code true} se o item for filho direto ou descendente.
    */
   public boolean contains(MediaItem item) {
-    throw new UnsupportedOperationException("Requisito 1: implemente PlaylistNode.contains");
+    for (MediaItem mediaItem : getChildren()) {
+      if (mediaItem.equals(item)) {
+        return true;
+      }
+      if (mediaItem instanceof PlaylistNode && ((PlaylistNode) mediaItem).contains(item)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
   public String getName() {
-    throw new UnsupportedOperationException("Exercício 1: implemente PlaylistNode.getName");
+    return name;
   }
 
   @Override
   public int getDurationSeconds() {
-    throw new UnsupportedOperationException(
-            "Exercício 1: implemente PlaylistNode.getDurationSeconds");
+    int total = 0;
+    for (MediaItem c : child) {
+      total += c.getDurationSeconds();
+    }
+    return total;
   }
 
   @Override
   public int getTrackCount() {
-    throw new UnsupportedOperationException("Exercício 1: implemente PlaylistNode.getTrackCount");
+    int total = 0;
+    for (MediaItem c : child) {
+      total += c.getTrackCount();
+    }
+    return total;
   }
 
   @Override
   public List<Track> flatten() {
-    throw new UnsupportedOperationException("Exercício 1: implemente PlaylistNode.flatten");
+    List<Track> result = new ArrayList<>();
+    for (MediaItem c : child) {
+      result.addAll(c.flatten());
+    }
+    return result;
   }
 }
