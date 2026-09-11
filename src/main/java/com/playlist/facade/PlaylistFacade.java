@@ -5,6 +5,15 @@ import com.playlist.composite.PlaylistNode;
 import com.playlist.core.Subscription;
 import com.playlist.core.TrackNotFoundException;
 import com.playlist.decorator.AudioTrack;
+import com.playlist.core.Track;
+import com.playlist.composite.TrackItem;
+import com.playlist.decorator.FadeInEffect;
+import com.playlist.decorator.RawAudioTrack;
+import com.playlist.decorator.VolumeEffect;
+import com.playlist.proxy.ProtectedAudioStreamProxy;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Fachada que esconde do mundo externo a colaboração entre catálogo, playlists,
@@ -13,7 +22,9 @@ import com.playlist.decorator.AudioTrack;
  * Quem usa a Playlist precisa conhecer apenas esta classe.
  */
 public class PlaylistFacade {
-
+  private final TrackCatalog catalog;
+  private final Subscription plan;
+  private final Map<String, ProtectedAudioStreamProxy> proxies = new HashMap<>();
   /**
    * Monta a fachada.
    *
@@ -22,7 +33,11 @@ public class PlaylistFacade {
    * @throws IllegalArgumentException se qualquer argumento for nulo.
    */
   public PlaylistFacade(TrackCatalog catalog, Subscription plan) {
-    throw new UnsupportedOperationException("Exercício 5: implemente o construtor de PlaylistFacade");
+    if (catalog == null || plan == null) {
+      throw new IllegalArgumentException("Catalog and plan cannot be null");
+    }
+    this.catalog = catalog;
+    this.plan = plan;
   }
 
   /**
@@ -32,7 +47,11 @@ public class PlaylistFacade {
    * @return a playlist preenchida.
    */
   public PlaylistNode buildLibrary(String name) {
-    throw new UnsupportedOperationException("Exercício 5: implemente PlaylistFacade.buildLibrary");
+    PlaylistNode playlist = new PlaylistNode(name);
+    for (Track track : catalog.findAll()) {
+      playlist.add(new TrackItem(track));
+    }
+    return playlist;
   }
 
   /**
@@ -43,7 +62,19 @@ public class PlaylistFacade {
    * @throws TrackNotFoundException se a faixa não existir no catálogo.
    */
   public byte[] listen(String trackId) {
-    throw new UnsupportedOperationException("Exercício 5: implemente PlaylistFacade.listen");
+    if (trackId == null) {
+      throw new TrackNotFoundException("Track id cannot be null");
+    }
+    ProtectedAudioStreamProxy proxy = proxies.get(trackId);
+    if (proxy == null) {
+      Optional<Track> trackOpt = catalog.findById(trackId);
+      if (trackOpt.isEmpty()) {
+        throw new TrackNotFoundException("Track not found: " + trackId);
+      }
+      proxy = new ProtectedAudioStreamProxy(trackOpt.get(), plan);
+      proxies.put(trackId, proxy);
+    }
+    return proxy.readBytes();
   }
 
   /**
@@ -56,6 +87,20 @@ public class PlaylistFacade {
    * @throws TrackNotFoundException se a faixa não existir no catálogo.
    */
   public AudioTrack preview(String trackId, double volume, int fadeInSamples) {
-    throw new UnsupportedOperationException("Exercício 5: implemente PlaylistFacade.preview");
+    Optional<Track> trackOpt = catalog.findById(trackId);
+    if (trackOpt.isEmpty()) {
+      throw new TrackNotFoundException("Track not found: " + trackId);
+    }
+    Track track = trackOpt.get();
+    byte[] bytes = listen(trackId);
+
+    double[] samples = new double[bytes.length];
+    for (int i = 0; i < bytes.length; i++) {
+      samples[i] = bytes[i] / 128.0;
+    }
+
+    AudioTrack raw = new RawAudioTrack(track.title(), samples);
+    AudioTrack withVolume = new VolumeEffect(raw, volume);
+    return new FadeInEffect(withVolume, fadeInSamples);
   }
 }
