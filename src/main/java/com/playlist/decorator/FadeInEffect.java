@@ -8,6 +8,7 @@ import java.util.Locale;
 public final class FadeInEffect extends AudioEffect {
 
   private final int sampleCount;
+
   /**
    * Cria o efeito de fade in.
    *
@@ -40,5 +41,3 @@ public final class FadeInEffect extends AudioEffect {
     return modified;
   }
 }
-
-

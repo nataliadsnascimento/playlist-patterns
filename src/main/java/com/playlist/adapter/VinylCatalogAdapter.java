@@ -61,7 +61,6 @@ public class VinylCatalogAdapter implements TrackCatalog {
     String rawTitle = parts[1];
     String rawArtist = parts[2];
     String rawDuration = parts[3];
-    String rawPremium = parts[4].trim();
 
     if (id.isEmpty()) {
       return Optional.empty();
@@ -85,6 +84,7 @@ public class VinylCatalogAdapter implements TrackCatalog {
       return Optional.empty();
     }
 
+    String rawPremium = parts[4].trim();
     boolean premium;
     if (rawPremium.equalsIgnoreCase("Y")) {
       premium = true;

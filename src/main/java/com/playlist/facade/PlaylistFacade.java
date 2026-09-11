@@ -2,11 +2,11 @@ package com.playlist.facade;
 
 import com.playlist.adapter.TrackCatalog;
 import com.playlist.composite.PlaylistNode;
+import com.playlist.composite.TrackItem;
 import com.playlist.core.Subscription;
+import com.playlist.core.Track;
 import com.playlist.core.TrackNotFoundException;
 import com.playlist.decorator.AudioTrack;
-import com.playlist.core.Track;
-import com.playlist.composite.TrackItem;
 import com.playlist.decorator.FadeInEffect;
 import com.playlist.decorator.RawAudioTrack;
 import com.playlist.decorator.VolumeEffect;
@@ -19,12 +19,14 @@ import java.util.Optional;
  * Fachada que esconde do mundo externo a colaboração entre catálogo, playlists,
  * streams protegidos e efeitos de áudio.
  *
- * Quem usa a Playlist precisa conhecer apenas esta classe.
+ * <p>Quem usa a Playlist precisa conhecer apenas esta classe.
  */
 public class PlaylistFacade {
+
   private final TrackCatalog catalog;
   private final Subscription plan;
   private final Map<String, ProtectedAudioStreamProxy> proxies = new HashMap<>();
+
   /**
    * Monta a fachada.
    *
